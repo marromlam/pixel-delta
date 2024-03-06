@@ -44,7 +44,7 @@ def pixeldelta_ocl(image1, image2):
     image2_d = thr.to_device(image2.astype(np.int32))
     diff_d = thr.empty_like(image1_d)
 
-    knl = prg.python_pixelmatch
+    knl = prg.python_pixel_delta
     knl(
         diff_d,
         image1_d,
