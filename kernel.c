@@ -48,3 +48,42 @@ double rgb2q(const double r, const double g, const double b) {
 
 
 
+
+
+KERNEL void python_pixel_delta(
+  __global int* output,
+  __global const int* img1,
+  __global const int* img2,
+  const int width,
+  const int height
+)
+{
+    int idx = get_global_id(0);
+    int idy = get_global_id(1);
+    // int idz = get_global_id(2);
+    int res[4] = {0, 0, 0, 0};
+
+    // printf("idx: %d, idy: %d, \n", idx, idy);
+    // if (idx ==0 && idy  == 0) {
+        // printf("w: %d, h: %d\n", width, height );
+       int diff = 0;
+        diff = pixel_delta(res, img1, img2, idx, idy, width, height);
+        if (diff > 0) {
+            // printf("--->diff: %d\n", diff);
+            // then output[idx + idy * width + 4 * width * height] = res;
+            // int pos = (y * width + x) * 4;
+            // printf("-> %4d %4d %4d %4d", (idx + idy * width) * 4+0,
+            // (idx + idy * width) * 4+1,
+            // (idx + idy * width) * 4+2,
+            // (idx + idy * width) * 4+3);
+            output[(idx + idy * width) * 4+0] = res[0];
+            output[(idx + idy * width) * 4+1] = res[1];
+            output[(idx + idy * width) * 4+2] = res[2];
+            output[(idx + idy * width) * 4+3] = res[3];
+
+        }
+    // }
+}
+
+
+
