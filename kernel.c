@@ -48,6 +48,96 @@ double rgb2q(const double r, const double g, const double b) {
 
 
 
+/*
+ * draw a pixel
+ * @param ret - return value
+ * @param r - red
+ * @param g - green
+ * @param b - blue
+ * */
+void draw_pixel(int ret[4], const int r, const int g, const int b) {
+    ret[0] = r;
+    ret[1] = g;
+    ret[2] = b;
+    ret[3] = 255;
+}
+
+
+
+/*
+ * draw a gray pixel
+ * @param img - image
+ * @param i - index
+ * @param alpha - alpha
+ * @param ret - return value
+ * */
+void draw_gray_pixel(const int* img, const int i, double alpha, int ret[4]) {
+    int r = img[i + 0];
+    int g = img[i + 1];
+    int b = img[i + 2];
+    double val = rgb2y(r, g, b);
+    val = blend(val, alpha * img[i + 3] / 255.0);
+    int val_int = double2int(val);
+    draw_pixel(ret, val_int, val_int, val_int);
+}
+
+
+
+/* Color delta
+ * @param img1 - image 1
+ * @param img2 - image 2
+ * @param k - index
+ * @param m - index
+ * @param y_only - only y
+ * @return - color delta
+ *
+ * Note: This function is used to calculate the color delta between two pixels
+ *
+ * Reference:
+ * Measuring perceived color difference using YIQ NTSC transmission color space
+ * in mobile applications -- Yuriy Kotsarenko, Fernando Ramos
+ * */
+double color_delta(const int* img1, const int* img2, size_t k, size_t m, int y_only) {
+    int r1 = img1[k + 0], g1 = img1[k + 1], b1 = img1[k + 2], a1 = img1[k + 3];
+    int r2 = img2[m + 0], g2 = img2[m + 1], b2 = img2[m + 2], a2 = img2[m + 3];
+
+    if (a1 == a2 && r1 == r2 && g1 == g2 && b1 == b2) {
+        return 0.0;
+    }
+
+    if (a1 < 255) {
+        const double alpha1 = a1 / 255.0;
+        r1 = blend(r1, alpha1);
+        g1 = blend(g1, alpha1);
+        b1 = blend(b1, alpha1);
+    }
+
+    if (a2 < 255) {
+        const double alpha2 = a2 / 255.0;
+        r2 = blend(r2, alpha2);
+        g2 = blend(g2, alpha2);
+        b2 = blend(b2, alpha2);
+    }
+
+    const double y1 = rgb2y(r1, g1, b1);
+    const double y2 = rgb2y(r2, g2, b2);
+    const double deltay = y1 - y2;
+
+    if (y_only) {
+        return deltay;
+    }
+
+    const double deltai = rgb2i(r1, g1, b1) - rgb2i(r2, g2, b2);
+    const double deltaq = rgb2q(r1, g1, b1) - rgb2q(r2, g2, b2);
+
+    const double deltae = 0.5053 * deltay * deltay + 0.299 * deltai * deltai + 0.1957 * deltaq * deltaq;
+
+    return (y1 > y2) ? -deltae : deltae;
+}
+
+
+
+
 
 
 KERNEL void python_pixel_delta(
